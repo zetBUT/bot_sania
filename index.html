@@ -3,302 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Фінансовий Щоденник</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <title>Фінанси Міні</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-family: Arial, sans-serif;
+      background: #1e1e2f;
+      color: #fff;
       margin: 0;
-      padding: 20px;
-      color: #333;
+      padding: 15px;
     }
     .container {
-      max-width: 1000px;
+      max-width: 600px;
       margin: 0 auto;
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      overflow: hidden;
-    }
-    header {
-      background: #4c51bf;
-      color: white;
+      background: #2a2a3d;
+      border-radius: 12px;
       padding: 20px;
-      text-align: center;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
     }
-    .nav {
-      display: flex;
-      background: #f8f9fa;
-      border-bottom: 1px solid #ddd;
-    }
-    .nav button {
-      flex: 1;
-      padding: 15px;
-      border: none;
-      background: none;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .nav button.active {
-      background: white;
-      border-bottom: 3px solid #4c51bf;
-      font-weight: bold;
-    }
-    .section {
-      padding: 20px;
-      display: none;
-    }
-    .section.active {
-      display: block;
-    }
-    input, select, textarea {
+    h1 { text-align: center; margin: 0 0 20px 0; }
+    input, select, button {
       width: 100%;
       padding: 12px;
       margin: 8px 0;
-      border: 1px solid #ddd;
       border-radius: 8px;
-      font-size: 16px;
-    }
-    button {
-      background: #4c51bf;
-      color: white;
       border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
       font-size: 16px;
     }
-    .transactions {
-      max-height: 400px;
-      overflow-y: auto;
+    input, select { background: #3a3a52; color: white; }
+    button {
+      background: #4c6ef5;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
     }
-    .transaction {
-      padding: 12px;
-      border-bottom: 1px solid #eee;
+    button:active { background: #3b5bd8; }
+    .history { margin-top: 20px; }
+    .item {
+      background: #3a3a52;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 8px;
       display: flex;
       justify-content: space-between;
     }
-    .expense { color: #e74c3c; }
-    .income { color: #27ae60; }
+    .expense { color: #ff6b6b; }
+    .income { color: #51cf66; }
     .summary {
-      display: flex;
-      justify-content: space-around;
-      background: #f8f9fa;
-      padding: 20px;
-      border-radius: 12px;
-      margin: 15px 0;
+      font-size: 18px;
+      text-align: center;
+      padding: 15px;
+      background: #3a3a52;
+      border-radius: 8px;
+      margin-bottom: 15px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>💰 Фінансовий Щоденник</h1>
-    </header>
+    <h1>💰 Фінанси Міні</h1>
 
-    <div class="nav">
-      <button onclick="showSection(0)" class="active">Додати запис</button>
-      <button onclick="showSection(1)">Історія</button>
-      <button onclick="showSection(2)">Звіт</button>
+    <div class="summary" id="summary">
+      Баланс: 0 грн
     </div>
 
-    <!-- Додати запис -->
-    <div class="section active" id="section0">
-      <h2>Новий запис</h2>
-      <select id="type" onchange="updateCategories()">
-        <option value="expense">Витрата</option>
-        <option value="income">Дохід</option>
-      </select>
+    <input type="number" id="amount" placeholder="Сума" step="0.01">
+    <select id="type">
+      <option value="expense">Витрата</option>
+      <option value="income">Дохід</option>
+    </select>
+    <input type="text" id="category" placeholder="Категорія (їжа, транспорт...)">
+    <input type="text" id="desc" placeholder="Опис (необов'язково)">
 
-      <input type="number" id="amount" placeholder="Сума (грн)" step="0.01">
-      <select id="category"></select>
-      <input type="date" id="date">
-      <textarea id="description" rows="2" placeholder="Опис (необов'язково)"></textarea>
-      
-      <button onclick="addTransaction()" style="width:100%; padding:15px;">Зберегти запис</button>
+    <button onclick="addRecord()">➕ Додати запис</button>
+
+    <div class="history">
+      <h2>Історія</h2>
+      <div id="history"></div>
     </div>
 
-    <!-- Історія -->
-    <div class="section" id="section1">
-      <h2>Історія операцій</h2>
-      <div id="transactions-list" class="transactions"></div>
-      <button onclick="exportToCSV()" style="margin-top:10px;">Експорт у CSV</button>
-    </div>
-
-    <!-- Звіт -->
-    <div class="section" id="section2">
-      <h2>Місячний звіт</h2>
-      <div class="summary" id="summary"></div>
-      <canvas id="expenseChart" height="200"></canvas>
-      <canvas id="incomeChart" height="200" style="margin-top:30px;"></canvas>
-    </div>
+    <button onclick="clearAll()" style="background:#e74c3c; margin-top:15px;">Очистити все</button>
   </div>
 
   <script>
-    let transactions = JSON.parse(localStorage.getItem('financeTransactions')) || [];
+    let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
 
-    const expenseCategories = ["Їжа", "Транспорт", "Житло", "Комуналка", "Розваги", "Здоров'я", "Одяг", "Техніка", "Інше"];
-    const incomeCategories = ["Зарплата", "Фріланс", "Інвестиції", "Подарунки", "Інше"];
-
-    function updateCategories() {
-      const type = document.getElementById('type').value;
-      const catSelect = document.getElementById('category');
-      catSelect.innerHTML = '';
-      
-      const cats = type === 'expense' ? expenseCategories : incomeCategories;
-      cats.forEach(cat => {
-        const opt = document.createElement('option');
-        opt.value = cat;
-        opt.textContent = cat;
-        catSelect.appendChild(opt);
-      });
+    function saveData() {
+      localStorage.setItem('miniFinance', JSON.stringify(records));
     }
 
-    function addTransaction() {
-      const type = document.getElementById('type').value;
+    function addRecord() {
       const amount = parseFloat(document.getElementById('amount').value);
-      const category = document.getElementById('category').value;
-      const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
-      const description = document.getElementById('description').value;
+      if (!amount) return alert("Введи суму!");
 
-      if (!amount || !category) {
-        alert("Введіть суму та категорію!");
-        return;
-      }
+      const type = document.getElementById('type').value;
+      const category = document.getElementById('category').value || "Інше";
+      const desc = document.getElementById('desc').value;
 
-      transactions.push({
-        id: Date.now(),
-        type,
-        amount,
-        category,
-        date,
-        description
+      records.push({
+        date: new Date().toLocaleDateString('uk-UA'),
+        type: type,
+        amount: amount,
+        category: category,
+        desc: desc
       });
 
-      localStorage.setItem('financeTransactions', JSON.stringify(transactions));
-      alert("✅ Запис додано!");
+      saveData();
+      updateUI();
       
-      // Очищення форми
+      // очищення полів
       document.getElementById('amount').value = '';
-      document.getElementById('description').value = '';
-      
-      loadTransactions();
-      generateReport();
+      document.getElementById('category').value = '';
+      document.getElementById('desc').value = '';
     }
 
-    function loadTransactions() {
-      const list = document.getElementById('transactions-list');
-      list.innerHTML = '';
+    function updateUI() {
+      let balance = 0;
+      let html = '';
 
-      transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+      records.forEach((r, i) => {
+        const sign = r.type === 'income' ? '+' : '-';
+        const color = r.type === 'income' ? 'income' : 'expense';
+        balance += r.type === 'income' ? r.amount : -r.amount;
 
-      transactions.forEach(t => {
-        const div = document.createElement('div');
-        div.className = `transaction ${t.type}`;
-        div.innerHTML = `
-          <div>
-            <strong>${t.date}</strong><br>
-            ${t.category} — ${t.description || ''}
-          </div>
-          <div style="text-align:right;">
-            <strong>${t.type === 'income' ? '+' : '-'}${t.amount} грн</strong>
-          </div>
-        `;
-        list.appendChild(div);
+        html += `
+          <div class="item">
+            <div>
+              <b>${r.date}</b> — ${r.category}<br>
+              <small>${r.desc}</small>
+            </div>
+            <div class="${color}"><b>${sign}${r.amount}</b></div>
+          </div>`;
       });
+
+      document.getElementById('history').innerHTML = html || '<p style="color:#777">Поки немає записів</p>';
+      document.getElementById('summary').innerHTML = `Баланс: <b>${balance.toFixed(0)} грн</b>`;
     }
 
-    function generateReport() {
-      const now = new Date();
-      const currentMonth = now.toISOString().slice(0,7); // YYYY-MM
-
-      const monthTransactions = transactions.filter(t => t.date.startsWith(currentMonth));
-
-      let totalIncome = 0, totalExpense = 0;
-      const expByCat = {}, incByCat = {};
-
-      monthTransactions.forEach(t => {
-        if (t.type === 'income') {
-          totalIncome += t.amount;
-          incByCat[t.category] = (incByCat[t.category] || 0) + t.amount;
-        } else {
-          totalExpense += t.amount;
-          expByCat[t.category] = (expByCat[t.category] || 0) + t.amount;
-        }
-      });
-
-      const balance = totalIncome - totalExpense;
-
-      document.getElementById('summary').innerHTML = `
-        <div><strong>Доходи</strong><br><span style="color:#27ae60; font-size:1.4em;">+${totalIncome.toFixed(2)}</span></div>
-        <div><strong>Витрати</strong><br><span style="color:#e74c3c; font-size:1.4em;">-${totalExpense.toFixed(2)}</span></div>
-        <div><strong>Баланс</strong><br><span style="font-size:1.4em;">${balance.toFixed(2)} грн</span></div>
-      `;
-
-      // Графік витрат
-      if (window.expChart) window.expChart.destroy();
-      window.expChart = new Chart(document.getElementById('expenseChart'), {
-        type: 'pie',
-        data: {
-          labels: Object.keys(expByCat),
-          datasets: [{
-            data: Object.values(expByCat),
-            backgroundColor: ['#e74c3c', '#f39c12', '#3498db', '#9b59b6', '#1abc9c']
-          }]
-        },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Витрати по категоріях' } } }
-      });
-
-      // Графік доходів
-      if (window.incChart) window.incChart.destroy();
-      window.incChart = new Chart(document.getElementById('incomeChart'), {
-        type: 'bar',
-        data: {
-          labels: Object.keys(incByCat),
-          datasets: [{
-            label: 'Доходи',
-            data: Object.values(incByCat),
-            backgroundColor: '#27ae60'
-          }]
-        },
-        options: { responsive: true, plugins: { title: { display: true, text: 'Доходи по категоріях' } } }
-      });
+    function clearAll() {
+      if (confirm("Точно очистити всі дані?")) {
+        records = [];
+        saveData();
+        updateUI();
+      }
     }
 
-    function exportToCSV() {
-      if (transactions.length === 0) return alert("Немає даних для експорту");
-
-      let csv = "Дата,Тип,Сума,Категорія,Опис\n";
-      transactions.forEach(t => {
-        csv += `${t.date},${t.type === 'income' ? 'Дохід' : 'Витрата'},${t.amount},${t.category},"${t.description || ''}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `finance_${new Date().toISOString().slice(0,10)}.csv`;
-      a.click();
-    }
-
-    function showSection(n) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-      
-      document.getElementById(`section${n}`).classList.add('active');
-      document.querySelectorAll('.nav button')[n].classList.add('active');
-
-      if (n === 1) loadTransactions();
-      if (n === 2) generateReport();
-    }
-
-    // Ініціалізація
-    window.onload = () => {
-      updateCategories();
-      document.getElementById('date').value = new Date().toISOString().split('T')[0];
-      showSection(0);
-    };
+    // Запуск
+    updateUI();
   </script>
 </body>
 </html>
