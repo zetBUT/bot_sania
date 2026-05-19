@@ -1,141 +1,304 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            background: var(--tg-theme-bg-color, #ffffff); 
-            color: var(--tg-theme-text-color, #000000); 
-            padding: 15px;
-            margin: 0;
-        }
-        
-        /* Стилі для вкладок (Табів) */
-        .tabs {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--tg-theme-hint-color, #ccc);
-        }
-        .tab-button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-hint-color, #888);
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-            font-weight: bold;
-            border-bottom: 3px solid transparent;
-        }
-        .tab-button.active {
-            color: var(--tg-theme-button-color, #248b65);
-            border-bottom: 3px solid var(--tg-theme-button-color, #248b65);
-        }
-
-        /* Контент вкладок (прихований за замовчуванням) */
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Стилі для елементів форми */
-        input, select, button { 
-            width: 100%; 
-            padding: 12px; 
-            margin: 10px 0; 
-            border-radius: 8px; 
-            border: 1px solid var(--tg-theme-hint-color, #ccc); 
-            box-sizing: border-box;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
-        }
-        button#send { 
-            background: var(--tg-theme-button-color, #248b65); 
-            color: var(--tg-theme-button-text-color, #fff); 
-            font-weight: bold; 
-            border: none;
-            cursor: pointer; 
-            margin-top: 15px;
-        }
-        
-        .info-box {
-            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Фінансовий Щоденник</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    header {
+      background: #4c51bf;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    .nav {
+      display: flex;
+      background: #f8f9fa;
+      border-bottom: 1px solid #ddd;
+    }
+    .nav button {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      background: none;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .nav button.active {
+      background: white;
+      border-bottom: 3px solid #4c51bf;
+      font-weight: bold;
+    }
+    .section {
+      padding: 20px;
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    button {
+      background: #4c51bf;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .transactions {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .transaction {
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+    }
+    .expense { color: #e74c3c; }
+    .income { color: #27ae60; }
+    .summary {
+      display: flex;
+      justify-content: space-around;
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 15px 0;
+    }
+  </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <h1>💰 Фінансовий Щоденник</h1>
+    </header>
 
-    <!-- Навігація між вкладками -->
-    <div class="tabs">
-        <button class="tab-button active" onclick="openTab(event, 'tab1')">Додати 📝</button>
-        <button class="tab-button" onclick="openTab(event, 'tab2')">Інфо 📊</button>
+    <div class="nav">
+      <button onclick="showSection(0)" class="active">Додати запис</button>
+      <button onclick="showSection(1)">Історія</button>
+      <button onclick="showSection(2)">Звіт</button>
     </div>
 
-    <!-- ВКЛАДКА 1: Форма додавання -->
-    <div id="tab1" class="tab-content active">
-        <h3>Додати транзакцію 💸</h3>
-        <select id="type">
-            <option value="income">Дохід 🟢</option>
-            <option value="expense">Витрата 🔴</option>
-        </select>
-        <input type="text" id="category" placeholder="Категорія (напр. Продукти)">
-        <input type="number" id="amount" placeholder="Сума">
-        <button id="send">Зберегти</button>
+    <!-- Додати запис -->
+    <div class="section active" id="section0">
+      <h2>Новий запис</h2>
+      <select id="type" onchange="updateCategories()">
+        <option value="expense">Витрата</option>
+        <option value="income">Дохід</option>
+      </select>
+
+      <input type="number" id="amount" placeholder="Сума (грн)" step="0.01">
+      <select id="category"></select>
+      <input type="date" id="date">
+      <textarea id="description" rows="2" placeholder="Опис (необов'язково)"></textarea>
+      
+      <button onclick="addTransaction()" style="width:100%; padding:15px;">Зберегти запис</button>
     </div>
 
-    <!-- ВКЛАДКА 2: Нова вкладка -->
-    <div id="tab2" class="tab-content">
-        <h3>Статистика та довідка ℹ️</h3>
-        <div class="info-box">
-            <p><strong>Як це працює?</strong></p>
-            <p>Вводь свої доходи та витрати у першій вкладці. Після натискання кнопки "Зберегти" дані автоматично надішлються боту, а це вікно закриється.</p>
-        </div>
+    <!-- Історія -->
+    <div class="section" id="section1">
+      <h2>Історія операцій</h2>
+      <div id="transactions-list" class="transactions"></div>
+      <button onclick="exportToCSV()" style="margin-top:10px;">Експорт у CSV</button>
     </div>
 
-    <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Розгорнути на весь екран
+    <!-- Звіт -->
+    <div class="section" id="section2">
+      <h2>Місячний звіт</h2>
+      <div class="summary" id="summary"></div>
+      <canvas id="expenseChart" height="200"></canvas>
+      <canvas id="incomeChart" height="200" style="margin-top:30px;"></canvas>
+    </div>
+  </div>
 
-        // Логіка перемикання вкладок
-        function openTab(evt, tabId) {
-            let i, tabcontent, tablinks;
-            
-            // Ховаємо весь контент
-            tabcontent = document.getElementsByClassName("tab-content");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
+  <script>
+    let transactions = JSON.parse(localStorage.getItem('financeTransactions')) || [];
 
-            // Прибираємо клас active з усіх кнопок
-            tablinks = document.getElementsByClassName("tab-button");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].className = tablinks[i].className.replace(" active", "");
-            }
+    const expenseCategories = ["Їжа", "Транспорт", "Житло", "Комуналка", "Розваги", "Здоров'я", "Одяг", "Техніка", "Інше"];
+    const incomeCategories = ["Зарплата", "Фріланс", "Інвестиції", "Подарунки", "Інше"];
 
-            // Показуємо поточну вкладку і робимо кнопку активною
-            document.getElementById(tabId).style.display = "block";
-            evt.currentTarget.className += " active";
+    function updateCategories() {
+      const type = document.getElementById('type').value;
+      const catSelect = document.getElementById('category');
+      catSelect.innerHTML = '';
+      
+      const cats = type === 'expense' ? expenseCategories : incomeCategories;
+      cats.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      });
+    }
+
+    function addTransaction() {
+      const type = document.getElementById('type').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      const category = document.getElementById('category').value;
+      const date = document.getElementById('date').value || new Date().toISOString().split('T')[0];
+      const description = document.getElementById('description').value;
+
+      if (!amount || !category) {
+        alert("Введіть суму та категорію!");
+        return;
+      }
+
+      transactions.push({
+        id: Date.now(),
+        type,
+        amount,
+        category,
+        date,
+        description
+      });
+
+      localStorage.setItem('financeTransactions', JSON.stringify(transactions));
+      alert("✅ Запис додано!");
+      
+      // Очищення форми
+      document.getElementById('amount').value = '';
+      document.getElementById('description').value = '';
+      
+      loadTransactions();
+      generateReport();
+    }
+
+    function loadTransactions() {
+      const list = document.getElementById('transactions-list');
+      list.innerHTML = '';
+
+      transactions.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+      transactions.forEach(t => {
+        const div = document.createElement('div');
+        div.className = `transaction ${t.type}`;
+        div.innerHTML = `
+          <div>
+            <strong>${t.date}</strong><br>
+            ${t.category} — ${t.description || ''}
+          </div>
+          <div style="text-align:right;">
+            <strong>${t.type === 'income' ? '+' : '-'}${t.amount} грн</strong>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function generateReport() {
+      const now = new Date();
+      const currentMonth = now.toISOString().slice(0,7); // YYYY-MM
+
+      const monthTransactions = transactions.filter(t => t.date.startsWith(currentMonth));
+
+      let totalIncome = 0, totalExpense = 0;
+      const expByCat = {}, incByCat = {};
+
+      monthTransactions.forEach(t => {
+        if (t.type === 'income') {
+          totalIncome += t.amount;
+          incByCat[t.category] = (incByCat[t.category] || 0) + t.amount;
+        } else {
+          totalExpense += t.amount;
+          expByCat[t.category] = (expByCat[t.category] || 0) + t.amount;
         }
+      });
 
-        // Логіка відправки даних (твоя оригінальна)
-        document.getElementById('send').onclick = function() {
-            let data = {
-                type: document.getElementById('type').value,
-                category: document.getElementById('category').value,
-                amount: document.getElementById('amount').value
-            };
-            tg.sendData(JSON.stringify(data)); // Відправка даних боту
-            tg.close(); // Закрити вікно
-        };
-    </script>
+      const balance = totalIncome - totalExpense;
+
+      document.getElementById('summary').innerHTML = `
+        <div><strong>Доходи</strong><br><span style="color:#27ae60; font-size:1.4em;">+${totalIncome.toFixed(2)}</span></div>
+        <div><strong>Витрати</strong><br><span style="color:#e74c3c; font-size:1.4em;">-${totalExpense.toFixed(2)}</span></div>
+        <div><strong>Баланс</strong><br><span style="font-size:1.4em;">${balance.toFixed(2)} грн</span></div>
+      `;
+
+      // Графік витрат
+      if (window.expChart) window.expChart.destroy();
+      window.expChart = new Chart(document.getElementById('expenseChart'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(expByCat),
+          datasets: [{
+            data: Object.values(expByCat),
+            backgroundColor: ['#e74c3c', '#f39c12', '#3498db', '#9b59b6', '#1abc9c']
+          }]
+        },
+        options: { responsive: true, plugins: { title: { display: true, text: 'Витрати по категоріях' } } }
+      });
+
+      // Графік доходів
+      if (window.incChart) window.incChart.destroy();
+      window.incChart = new Chart(document.getElementById('incomeChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(incByCat),
+          datasets: [{
+            label: 'Доходи',
+            data: Object.values(incByCat),
+            backgroundColor: '#27ae60'
+          }]
+        },
+        options: { responsive: true, plugins: { title: { display: true, text: 'Доходи по категоріях' } } }
+      });
+    }
+
+    function exportToCSV() {
+      if (transactions.length === 0) return alert("Немає даних для експорту");
+
+      let csv = "Дата,Тип,Сума,Категорія,Опис\n";
+      transactions.forEach(t => {
+        csv += `${t.date},${t.type === 'income' ? 'Дохід' : 'Витрата'},${t.amount},${t.category},"${t.description || ''}"\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `finance_${new Date().toISOString().slice(0,10)}.csv`;
+      a.click();
+    }
+
+    function showSection(n) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      
+      document.getElementById(`section${n}`).classList.add('active');
+      document.querySelectorAll('.nav button')[n].classList.add('active');
+
+      if (n === 1) loadTransactions();
+      if (n === 2) generateReport();
+    }
+
+    // Ініціалізація
+    window.onload = () => {
+      updateCategories();
+      document.getElementById('date').value = new Date().toISOString().split('T')[0];
+      showSection(0);
+    };
+  </script>
 </body>
 </html>
