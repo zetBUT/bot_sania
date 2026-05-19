@@ -5,25 +5,128 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 20px; }
-        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
-        button { background: var(--tg-theme-button-color); color: var(--tg-theme-button-text-color); font-weight: bold; cursor: pointer; }
+        body { 
+            font-family: sans-serif; 
+            background: var(--tg-theme-bg-color, #ffffff); 
+            color: var(--tg-theme-text-color, #000000); 
+            padding: 15px;
+            margin: 0;
+        }
+        
+        /* Стилі для вкладок (Табів) */
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--tg-theme-hint-color, #ccc);
+        }
+        .tab-button {
+            background: none;
+            border: none;
+            color: var(--tg-theme-hint-color, #888);
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            color: var(--tg-theme-button-color, #248b65);
+            border-bottom: 3px solid var(--tg-theme-button-color, #248b65);
+        }
+
+        /* Контент вкладок (прихований за замовчуванням) */
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Стилі для елементів форми */
+        input, select, button { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 10px 0; 
+            border-radius: 8px; 
+            border: 1px solid var(--tg-theme-hint-color, #ccc); 
+            box-sizing: border-box;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        button#send { 
+            background: var(--tg-theme-button-color, #248b65); 
+            color: var(--tg-theme-button-text-color, #fff); 
+            font-weight: bold; 
+            border: none;
+            cursor: pointer; 
+            margin-top: 15px;
+        }
+        
+        .info-box {
+            background: var(--tg-theme-secondary-bg-color, #f0f0f0);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <h3>Додати транзакцію 💸</h3>
-    <select id="type">
-        <option value="income">Дохід 🟢</option>
-        <option value="expense">Витрата 🔴</option>
-    </select>
-    <input type="text" id="category" placeholder="Категорія (напр. Продукти)">
-    <input type="number" id="amount" placeholder="Сума">
-    <button id="send">Зберегти</button>
+
+    <!-- Навігація між вкладками -->
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab(event, 'tab1')">Додати 📝</button>
+        <button class="tab-button" onclick="openTab(event, 'tab2')">Інфо 📊</button>
+    </div>
+
+    <!-- ВКЛАДКА 1: Форма додавання -->
+    <div id="tab1" class="tab-content active">
+        <h3>Додати транзакцію 💸</h3>
+        <select id="type">
+            <option value="income">Дохід 🟢</option>
+            <option value="expense">Витрата 🔴</option>
+        </select>
+        <input type="text" id="category" placeholder="Категорія (напр. Продукти)">
+        <input type="number" id="amount" placeholder="Сума">
+        <button id="send">Зберегти</button>
+    </div>
+
+    <!-- ВКЛАДКА 2: Нова вкладка -->
+    <div id="tab2" class="tab-content">
+        <h3>Статистика та довідка ℹ️</h3>
+        <div class="info-box">
+            <p><strong>Як це працює?</strong></p>
+            <p>Вводь свої доходи та витрати у першій вкладці. Після натискання кнопки "Зберегти" дані автоматично надішлються боту, а це вікно закриється.</p>
+        </div>
+    </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand(); // Розгорнути на весь екран
 
+        // Логіка перемикання вкладок
+        function openTab(evt, tabId) {
+            let i, tabcontent, tablinks;
+            
+            // Ховаємо весь контент
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+
+            // Прибираємо клас active з усіх кнопок
+            tablinks = document.getElementsByClassName("tab-button");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+
+            // Показуємо поточну вкладку і робимо кнопку активною
+            document.getElementById(tabId).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // Логіка відправки даних (твоя оригінальна)
         document.getElementById('send').onclick = function() {
             let data = {
                 type: document.getElementById('type').value,
