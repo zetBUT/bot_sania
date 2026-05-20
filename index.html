@@ -5,77 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Фінанси Міні</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #1e1e2f;
-      color: #fff;
-      margin: 0;
-      padding: 15px;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background: #2a2a3d;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.5);
-    }
-    h1 { text-align: center; margin: 0 0 20px 0; }
+    body {font-family: Arial, sans-serif; background: #1e1e2f; color: #fff; margin:0; padding:15px;}
+    .container {max-width: 600px; margin: 0 auto; background: #2a2a3d; border-radius: 12px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);}
+    h1 {text-align:center;}
     input, select, button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
+      width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 16px;
     }
-    input, select { background: #3a3a52; color: white; }
-    button {
-      background: #4c6ef5;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:active { background: #3b5bd8; }
-    .send-btn {
-      background: #51cf66;
-      margin-top: 10px;
-    }
-    .history { margin-top: 20px; }
-    .item {
-      background: #3a3a52;
-      padding: 10px;
-      margin: 8px 0;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .expense { color: #ff6b6b; }
-    .income { color: #51cf66; }
-    .summary {
-      font-size: 18px;
-      text-align: center;
-      padding: 15px;
-      background: #3a3a52;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
+    input, select {background: #3a3a52; color: white;}
+    button {background: #4c6ef5; color: white; font-weight: bold; cursor: pointer;}
+    button:active {background: #3b5bd8;}
+    .send-btn {background: #51cf66; margin: 15px 0;}
+    .item {background: #3a3a52; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between;}
+    .expense {color: #ff6b6b;}
+    .income {color: #51cf66;}
+    .summary {font-size: 18px; text-align: center; padding: 15px; background: #3a3a52; border-radius: 8px; margin-bottom: 15px;}
   </style>
 </head>
 <body>
   <div class="container">
     <h1>💰 Фінанси Міні</h1>
 
-    <div class="summary" id="summary">
-      Баланс: 0 грн
-    </div>
+    <div class="summary" id="summary">Баланс: 0 грн</div>
 
     <input type="number" id="amount" placeholder="Сума" step="0.01">
     <select id="type">
       <option value="expense">Витрата</option>
       <option value="income">Дохід</option>
     </select>
-    <input type="text" id="category" placeholder="Категорія (їжа, транспорт...)">
+    <input type="text" id="category" placeholder="Категорія">
     <input type="text" id="desc" placeholder="Опис (необов'язково)">
 
     <button onclick="addRecord()">➕ Додати запис</button>
@@ -86,15 +43,15 @@
       <div id="history"></div>
     </div>
 
-    <button onclick="clearAll()" style="background:#e74c3c; margin-top:15px;">Очистити все</button>
+    <button onclick="clearAll()" style="background:#e74c3c; margin-top:10px;">Очистити все</button>
   </div>
 
   <script>
-    let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
-
-    // Telegram WebApp
     const tg = window.Telegram.WebApp;
     tg.expand();
+    tg.ready();
+
+    let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
 
     function saveData() {
       localStorage.setItem('miniFinance', JSON.stringify(records));
@@ -102,23 +59,18 @@
 
     function addRecord() {
       const amount = parseFloat(document.getElementById('amount').value);
-      if (!amount) return alert("Введи суму!");
-
-      const type = document.getElementById('type').value;
-      const category = document.getElementById('category').value || "Інше";
-      const desc = document.getElementById('desc').value;
+      if (!amount) return alert("Введіть суму!");
 
       records.push({
         date: new Date().toLocaleDateString('uk-UA'),
-        type: type,
+        type: document.getElementById('type').value,
         amount: amount,
-        category: category,
-        desc: desc
+        category: document.getElementById('category').value || "Інше",
+        desc: document.getElementById('desc').value
       });
 
       saveData();
       updateUI();
-      
       document.getElementById('amount').value = '';
       document.getElementById('category').value = '';
       document.getElementById('desc').value = '';
@@ -128,18 +80,13 @@
       let balance = 0;
       let html = '';
 
-      records.forEach((r) => {
+      records.forEach(r => {
         const sign = r.type === 'income' ? '+' : '-';
-        const color = r.type === 'income' ? 'income' : 'expense';
         balance += r.type === 'income' ? r.amount : -r.amount;
-
         html += `
           <div class="item">
-            <div>
-              <b>${r.date}</b> — ${r.category}<br>
-              <small>${r.desc}</small>
-            </div>
-            <div class="${color}"><b>${sign}${r.amount}</b></div>
+            <div><b>${r.date}</b> — ${r.category}<br><small>${r.desc}</small></div>
+            <div class="${r.type}"><b>${sign}${r.amount}</b></div>
           </div>`;
       });
 
@@ -148,47 +95,32 @@
     }
 
     function sendReport() {
-      if (records.length === 0) {
-        alert("Немає даних для відправки");
-        return;
-      }
+      if (records.length === 0) return alert("Немає записів!");
 
       let balance = 0;
-      records.forEach(r => {
-        balance += r.type === 'income' ? r.amount : -r.amount;
-      });
+      records.forEach(r => balance += r.type === 'income' ? r.amount : -r.amount);
 
-      // Формуємо текст звіту
-      let text = `📊 *Фінансовий звіт*\n\n`;
-      text += `💰 Баланс: *${balance.toFixed(0)} грн*\n`;
-      text += `📅 Записів: ${records.length}\n\n`;
-      text += `Останні операції:\n`;
+      let text = `Баланс: ${balance.toFixed(0)} грн\n`;
+      text += `Записів: ${records.length}\n\nОстанні операції:\n`;
 
-      // останні 5 записів
-      const last = records.slice(-5).reverse();
-      last.forEach(r => {
+      records.slice(-6).reverse().forEach(r => {
         const sign = r.type === 'income' ? '✅ +' : '❌ -';
         text += `${r.date} ${sign}${r.amount} — ${r.category}\n`;
       });
 
-      // Відправляємо дані в бот
       tg.sendData(text);
       
-      tg.showPopup({
-        title: "✅ Відправлено",
-        message: "Звіт надіслано в чат"
-      });
+      tg.showPopup({title: "✅ Відправлено", message: "Звіт надіслано в чат"});
     }
 
     function clearAll() {
-      if (confirm("Точно очистити всі дані?")) {
+      if (confirm("Очистити всі дані?")) {
         records = [];
         saveData();
         updateUI();
       }
     }
 
-    // Запуск
     updateUI();
   </script>
 </body>
