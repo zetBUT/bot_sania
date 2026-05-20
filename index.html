@@ -53,7 +53,7 @@
     tg.ready();
 
     let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
-    let isSending = false;   // Захист від повторного натискання
+    let isSending = false;
 
     function saveData() {
       localStorage.setItem('miniFinance', JSON.stringify(records));
@@ -61,20 +61,19 @@
 
     function addRecord() {
       const amount = parseFloat(document.getElementById('amount').value);
-      if (!amount) return alert("Введіть суму!");
+      if (!amount || isNaN(amount)) return alert("Введіть правильну суму!");
 
       records.push({
         date: new Date().toLocaleDateString('uk-UA'),
         type: document.getElementById('type').value,
         amount: amount,
-        category: document.getElementById('category').value || "Інше",
-        desc: document.getElementById('desc').value || ""
+        category: document.getElementById('category').value.trim() || "Інше",
+        desc: document.getElementById('desc').value.trim() || ""
       });
 
       saveData();
       updateUI();
       
-      // Очищення полів
       document.getElementById('amount').value = '';
       document.getElementById('category').value = '';
       document.getElementById('desc').value = '';
@@ -99,13 +98,16 @@
     }
 
     function sendReport() {
-      if (records.length === 0) return alert("Немає записів для відправки!");
+      if (records.length === 0) {
+        alert("❌ Немає записів! Додайте хоча б одну операцію.");
+        return;
+      }
       if (isSending) return;
 
       isSending = true;
       const sendBtn = document.getElementById('sendBtn');
       sendBtn.disabled = true;
-      sendBtn.textContent = "Відправляємо...";
+      sendBtn.textContent = "📤 Відправляємо...";
 
       let balance = 0;
       records.forEach(r => {
@@ -116,18 +118,21 @@
       text += `📊 Всього записів: ${records.length}\n\n`;
       text += `Останні операції:\n`;
 
-      records.slice(-7).reverse().forEach(r => {
+      records.slice(-8).reverse().forEach(r => {
         const sign = r.type === 'income' ? '✅ +' : '❌ -';
         text += `${r.date} ${sign}${r.amount} — ${r.category}\n`;
       });
 
-      tg.sendData(text);
-
-      // Показуємо сповіщення
-      tg.showPopup({
-        title: "✅ Звіт відправлено",
-        message: "Дані надіслано в чат"
-      });
+      // Надійно відправляємо
+      try {
+        tg.sendData(text);
+        tg.showPopup({
+          title: "✅ Успішно",
+          message: "Звіт надіслано в чат"
+        });
+      } catch (e) {
+        alert("Помилка відправки");
+      }
 
       // Повертаємо кнопку через 2 секунди
       setTimeout(() => {
@@ -138,14 +143,14 @@
     }
 
     function clearAll() {
-      if (confirm("Точно очистити всі дані?")) {
+      if (confirm("Точно очистити ВСІ дані?")) {
         records = [];
         saveData();
         updateUI();
       }
     }
 
-    // Ініціалізація
+    // Запуск
     updateUI();
   </script>
 </body>
