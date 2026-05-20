@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="uk">
 <head>
@@ -12,19 +13,19 @@
 <style>
 
 body{
-    background:#0f0f0f;
+    background:#111;
     color:white;
     font-family:Arial;
     padding:15px;
 }
 
-.container{
+.box{
     max-width:500px;
     margin:auto;
 }
 
 .card{
-    background:#1d1d1d;
+    background:#1e1e1e;
     padding:15px;
     border-radius:15px;
     margin-top:10px;
@@ -33,6 +34,7 @@ body{
 input,
 select,
 button{
+
     width:100%;
     padding:14px;
     margin-top:10px;
@@ -43,7 +45,7 @@ button{
 
 input,
 select{
-    background:#2a2a2a;
+    background:#2b2b2b;
     color:white;
 }
 
@@ -66,23 +68,23 @@ button{
 </head>
 <body>
 
-<div class="container">
+<div class="box">
 
 <h1>💰 Finance App</h1>
 
 <div class="card">
-    <h3>💰 Доходи</h3>
-    <h2 id="income">0 грн</h2>
+<h3>💰 Доходи</h3>
+<h2 id="income">0 грн</h2>
 </div>
 
 <div class="card">
-    <h3>💸 Витрати</h3>
-    <h2 id="expense">0 грн</h2>
+<h3>💸 Витрати</h3>
+<h2 id="expense">0 грн</h2>
 </div>
 
 <div class="card">
-    <h3>🟢 Баланс</h3>
-    <h2 id="balance">0 грн</h2>
+<h3>🟢 Баланс</h3>
+<h2 id="balance">0 грн</h2>
 </div>
 
 <select id="type">
@@ -98,7 +100,6 @@ button{
 </select>
 
 <input
-type="text"
 id="category"
 placeholder="Категорія">
 
@@ -111,8 +112,8 @@ placeholder="Сума">
 ➕ Додати
 </button>
 
-<button onclick="sendReport()">
-📤 Відправити звіт
+<button onclick="showReport()">
+📊 Звіт
 </button>
 
 <div id="history"></div>
@@ -121,9 +122,10 @@ placeholder="Сума">
 
 <script>
 
-Telegram.WebApp.ready()
+Telegram.WebApp.expand()
 
-let transactions = JSON.parse(
+let transactions =
+JSON.parse(
 localStorage.getItem("transactions")
 ) || []
 
@@ -158,10 +160,10 @@ function addTransaction(){
         JSON.stringify(transactions)
     )
 
-    updateUI()
-
     document.getElementById("category").value=""
     document.getElementById("amount").value=""
+
+    updateUI()
 }
 
 function updateUI(){
@@ -186,9 +188,7 @@ function updateUI(){
 
         <div class="card">
 
-        <h3>
-        ${item.category}
-        </h3>
+        <h3>${item.category}</h3>
 
         <p class="${
         item.type==="income"
@@ -207,6 +207,7 @@ function updateUI(){
         </p>
 
         </div>
+
         `
     })
 
@@ -223,7 +224,7 @@ function updateUI(){
     .innerHTML = html
 }
 
-function sendReport(){
+function showReport(){
 
     let income = 0
     let expense = 0
@@ -238,7 +239,7 @@ function sendReport(){
 
     })
 
-    let report =
+    alert(
 
 `📊 Місячний звіт
 
@@ -246,12 +247,11 @@ function sendReport(){
 💸 Витрати: ${expense} грн
 🟢 Баланс: ${income-expense} грн`
 
-    Telegram.WebApp.sendData(report)
-
-    Telegram.WebApp.close()
+    )
 }
 
 </script>
 
 </body>
 </html>
+```
