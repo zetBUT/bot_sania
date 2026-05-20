@@ -1,90 +1,63 @@
 <!DOCTYPE html>
-<html lang="uk">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Фінанси Міні</title>
-  <style>
-    body {font-family: Arial, sans-serif; background:#1e1e2f; color:#fff; margin:0; padding:15px;}
-    .container {max-width:600px; margin:0 auto; background:#2a2a3d; padding:20px; border-radius:12px;}
-    button, input, select {width:100%; padding:12px; margin:8px 0; border-radius:8px; font-size:16px;}
-    input, select {background:#3a3a52; color:white; border:none;}
-    button {background:#4c6ef5; color:white; font-weight:bold; cursor:pointer;}
-    .send-btn {background:#51cf66;}
-    .send-btn:disabled {background:#555;}
-  </style>
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select, button {
+            padding: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>💰 Фінанси Міні</h1>
-    <div id="summary" style="text-align:center; font-size:18px; margin:15px 0;">Баланс: 0 грн</div>
 
-    <input type="number" id="amount" placeholder="Сума" step="0.01">
-    <select id="type">
-      <option value="expense">Витрата</option>
-      <option value="income">Дохід</option>
-    </select>
-    <input type="text" id="category" placeholder="Категорія">
-    <input type="text" id="desc" placeholder="Опис">
+<div class="box">
 
-    <button onclick="addRecord()">➕ Додати</button>
-    <button id="sendBtn" onclick="sendReport()" class="send-btn">📤 Відправити звіт в чат</button>
+    <h1>📒 Фінансовий щоденник</h1>
 
-    <h2>Історія</h2>
-    <div id="history"></div>
-  </div>
+    <h2>💰 Доходи: {{income}} грн</h2>
+    <h2>💸 Витрати: {{expense}} грн</h2>
+    <h2>🟢 Баланс: {{balance}} грн</h2>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
+    <form method="POST">
+        <select name="type">
+            <option value="income">Доходи</option>
+            <option value="expense">Витрати</option>
+        </select>
 
-    let records = JSON.parse(localStorage.getItem('finance')) || [];
+        <input type="text" name="category" placeholder="Категорія" required>
 
-    function updateUI() {
-      let bal = 0;
-      let html = '';
-      records.forEach(r => {
-        bal += r.type === 'income' ? r.amount : -r.amount;
-        html += `<div style="background:#3a3a52;padding:10px;margin:5px 0;border-radius:8px;">
-          ${r.date} | ${r.category} | <b>${r.type==='income'?'+' : '-'}${r.amount}</b>
-        </div>`;
-      });
-      document.getElementById('history').innerHTML = html || 'Поки пусто';
-      document.getElementById('summary').innerHTML = `Баланс: <b>${bal.toFixed(0)} грн</b>`;
-    }
+        <input type="number" name="amount" placeholder="Сума" required>
 
-    function addRecord() {
-      const amt = parseFloat(document.getElementById('amount').value);
-      if (!amt) return alert("Введи суму!");
-      
-      records.push({
-        date: new Date().toLocaleDateString('uk-UA'),
-        type: document.getElementById('type').value,
-        amount: amt,
-        category: document.getElementById('category').value || "Інше",
-        desc: document.getElementById('desc').value
-      });
-      localStorage.setItem('finance', JSON.stringify(records));
-      updateUI();
-      document.getElementById('amount').value = '';
-    }
+        <button type="submit">Додати</button>
+    </form>
 
-    function sendReport() {
-      if (records.length === 0) return alert("Немає записів!");
+    <table>
+        <tr>
+            <th>Тип</th>
+            <th>Категорія</th>
+            <th>Сума</th>
+        </tr>
 
-      let bal = 0;
-      records.forEach(r => bal += r.type === 'income' ? r.amount : -r.amount);
+        {{table}}
 
-      let text = `Баланс: ${bal.toFixed(0)} грн\nЗаписів: ${records.length}\n\nОстаннє:\n`;
-      records.slice(-5).reverse().forEach(r => {
-        text += `${r.date} ${r.type==='income'?'✅ +':'❌ -'}${r.amount} — ${r.category}\n`;
-      });
+    </table>
 
-      tg.sendData(text);
-      alert("✅ Відправлено в чат!");
-    }
+</div>
 
-    updateUI();
-  </script>
 </body>
 </html>
