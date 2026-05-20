@@ -15,6 +15,7 @@
     button {background: #4c6ef5; color: white; font-weight: bold; cursor: pointer;}
     button:active {background: #3b5bd8;}
     .send-btn {background: #51cf66; margin: 15px 0;}
+    .send-btn:disabled {background: #666; cursor: not-allowed;}
     .item {background: #3a3a52; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between;}
     .expense {color: #ff6b6b;}
     .income {color: #51cf66;}
@@ -36,7 +37,7 @@
     <input type="text" id="desc" placeholder="Опис (необов'язково)">
 
     <button onclick="addRecord()">➕ Додати запис</button>
-    <button onclick="sendReport()" class="send-btn">📤 Відправити звіт в чат</button>
+    <button id="sendBtn" onclick="sendReport()" class="send-btn">📤 Відправити звіт в чат</button>
 
     <div class="history">
       <h2>Історія</h2>
@@ -52,6 +53,7 @@
     tg.ready();
 
     let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
+    let isSending = false;   // Захист від повторного натискання
 
     function saveData() {
       localStorage.setItem('miniFinance', JSON.stringify(records));
@@ -66,11 +68,13 @@
         type: document.getElementById('type').value,
         amount: amount,
         category: document.getElementById('category').value || "Інше",
-        desc: document.getElementById('desc').value
+        desc: document.getElementById('desc').value || ""
       });
 
       saveData();
       updateUI();
+      
+      // Очищення полів
       document.getElementById('amount').value = '';
       document.getElementById('category').value = '';
       document.getElementById('desc').value = '';
@@ -95,32 +99,53 @@
     }
 
     function sendReport() {
-      if (records.length === 0) return alert("Немає записів!");
+      if (records.length === 0) return alert("Немає записів для відправки!");
+      if (isSending) return;
+
+      isSending = true;
+      const sendBtn = document.getElementById('sendBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Відправляємо...";
 
       let balance = 0;
-      records.forEach(r => balance += r.type === 'income' ? r.amount : -r.amount);
+      records.forEach(r => {
+        balance += r.type === 'income' ? r.amount : -r.amount;
+      });
 
-      let text = `Баланс: ${balance.toFixed(0)} грн\n`;
-      text += `Записів: ${records.length}\n\nОстанні операції:\n`;
+      let text = `💰 Баланс: ${balance.toFixed(0)} грн\n`;
+      text += `📊 Всього записів: ${records.length}\n\n`;
+      text += `Останні операції:\n`;
 
-      records.slice(-6).reverse().forEach(r => {
+      records.slice(-7).reverse().forEach(r => {
         const sign = r.type === 'income' ? '✅ +' : '❌ -';
         text += `${r.date} ${sign}${r.amount} — ${r.category}\n`;
       });
 
       tg.sendData(text);
-      
-      tg.showPopup({title: "✅ Відправлено", message: "Звіт надіслано в чат"});
+
+      // Показуємо сповіщення
+      tg.showPopup({
+        title: "✅ Звіт відправлено",
+        message: "Дані надіслано в чат"
+      });
+
+      // Повертаємо кнопку через 2 секунди
+      setTimeout(() => {
+        isSending = false;
+        sendBtn.disabled = false;
+        sendBtn.textContent = "📤 Відправити звіт в чат";
+      }, 2000);
     }
 
     function clearAll() {
-      if (confirm("Очистити всі дані?")) {
+      if (confirm("Точно очистити всі дані?")) {
         records = [];
         saveData();
         updateUI();
       }
     }
 
+    // Ініціалізація
     updateUI();
   </script>
 </body>
