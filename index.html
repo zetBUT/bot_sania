@@ -6,16 +6,15 @@
   <title>Фінанси Міні</title>
   <style>
     body {font-family: Arial, sans-serif; background: #1e1e2f; color: #fff; margin:0; padding:15px;}
-    .container {max-width: 600px; margin: 0 auto; background: #2a2a3d; border-radius: 12px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.5);}
-    h1 {text-align:center;}
+    .container {max-width: 600px; margin: 0 auto; background: #2a2a3d; border-radius: 12px; padding: 20px;}
+    h1 {text-align:center; margin:0 0 20px 0;}
     input, select, button {
       width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; font-size: 16px;
     }
     input, select {background: #3a3a52; color: white;}
     button {background: #4c6ef5; color: white; font-weight: bold; cursor: pointer;}
-    button:active {background: #3b5bd8;}
-    .send-btn {background: #51cf66; margin: 15px 0;}
-    .send-btn:disabled {background: #666; cursor: not-allowed;}
+    .send-btn {background: #51cf66; margin: 15px 0 10px 0;}
+    .send-btn:disabled {background: #555; cursor: not-allowed;}
     .item {background: #3a3a52; padding: 10px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between;}
     .expense {color: #ff6b6b;}
     .income {color: #51cf66;}
@@ -33,7 +32,7 @@
       <option value="expense">Витрата</option>
       <option value="income">Дохід</option>
     </select>
-    <input type="text" id="category" placeholder="Категорія">
+    <input type="text" id="category" placeholder="Категорія (наприклад: їжа)">
     <input type="text" id="desc" placeholder="Опис (необов'язково)">
 
     <button onclick="addRecord()">➕ Додати запис</button>
@@ -44,7 +43,7 @@
       <div id="history"></div>
     </div>
 
-    <button onclick="clearAll()" style="background:#e74c3c; margin-top:10px;">Очистити все</button>
+    <button onclick="clearAll()" style="background:#e74c3c;">🗑 Очистити все</button>
   </div>
 
   <script>
@@ -61,7 +60,7 @@
 
     function addRecord() {
       const amount = parseFloat(document.getElementById('amount').value);
-      if (!amount || isNaN(amount)) return alert("Введіть правильну суму!");
+      if (!amount) return alert("Введи суму!");
 
       records.push({
         date: new Date().toLocaleDateString('uk-UA'),
@@ -85,7 +84,7 @@
 
       records.forEach(r => {
         const sign = r.type === 'income' ? '+' : '-';
-        balance += r.type === 'income' ? r.amount : -r.amount;
+        balance += (r.type === 'income' ? r.amount : -r.amount);
         html += `
           <div class="item">
             <div><b>${r.date}</b> — ${r.category}<br><small>${r.desc}</small></div>
@@ -98,59 +97,48 @@
     }
 
     function sendReport() {
-      if (records.length === 0) {
-        alert("❌ Немає записів! Додайте хоча б одну операцію.");
-        return;
-      }
+      if (records.length === 0) return alert("Немає записів для відправки!");
       if (isSending) return;
 
       isSending = true;
-      const sendBtn = document.getElementById('sendBtn');
-      sendBtn.disabled = true;
-      sendBtn.textContent = "📤 Відправляємо...";
+      const btn = document.getElementById('sendBtn');
+      btn.disabled = true;
+      btn.textContent = "Відправляємо...";
 
       let balance = 0;
-      records.forEach(r => {
-        balance += r.type === 'income' ? r.amount : -r.amount;
-      });
+      records.forEach(r => balance += r.type === 'income' ? r.amount : -r.amount);
 
-      let text = `💰 Баланс: ${balance.toFixed(0)} грн\n`;
-      text += `📊 Всього записів: ${records.length}\n\n`;
-      text += `Останні операції:\n`;
+      let text = `Баланс: ${balance.toFixed(0)} грн\n`;
+      text += `Записів: ${records.length}\n\nОстанні операції:\n`;
 
       records.slice(-8).reverse().forEach(r => {
         const sign = r.type === 'income' ? '✅ +' : '❌ -';
         text += `${r.date} ${sign}${r.amount} — ${r.category}\n`;
       });
 
-      // Надійно відправляємо
-      try {
-        tg.sendData(text);
-        tg.showPopup({
-          title: "✅ Успішно",
-          message: "Звіт надіслано в чат"
-        });
-      } catch (e) {
-        alert("Помилка відправки");
-      }
+      // Відправка
+      tg.sendData(text);
 
-      // Повертаємо кнопку через 2 секунди
+      tg.showPopup({
+        title: "✅ Відправлено",
+        message: "Звіт надіслано в чат"
+      });
+
       setTimeout(() => {
         isSending = false;
-        sendBtn.disabled = false;
-        sendBtn.textContent = "📤 Відправити звіт в чат";
-      }, 2000);
+        btn.disabled = false;
+        btn.textContent = "📤 Відправити звіт в чат";
+      }, 1800);
     }
 
     function clearAll() {
-      if (confirm("Точно очистити ВСІ дані?")) {
+      if (confirm("Очистити всі дані?")) {
         records = [];
         saveData();
         updateUI();
       }
     }
 
-    // Запуск
     updateUI();
   </script>
 </body>
