@@ -37,6 +37,10 @@
       cursor: pointer;
     }
     button:active { background: #3b5bd8; }
+    .send-btn {
+      background: #51cf66;
+      margin-top: 10px;
+    }
     .history { margin-top: 20px; }
     .item {
       background: #3a3a52;
@@ -75,6 +79,7 @@
     <input type="text" id="desc" placeholder="Опис (необов'язково)">
 
     <button onclick="addRecord()">➕ Додати запис</button>
+    <button onclick="sendReport()" class="send-btn">📤 Відправити звіт в чат</button>
 
     <div class="history">
       <h2>Історія</h2>
@@ -86,6 +91,10 @@
 
   <script>
     let records = JSON.parse(localStorage.getItem('miniFinance')) || [];
+
+    // Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand();
 
     function saveData() {
       localStorage.setItem('miniFinance', JSON.stringify(records));
@@ -110,7 +119,6 @@
       saveData();
       updateUI();
       
-      // очищення полів
       document.getElementById('amount').value = '';
       document.getElementById('category').value = '';
       document.getElementById('desc').value = '';
@@ -120,7 +128,7 @@
       let balance = 0;
       let html = '';
 
-      records.forEach((r, i) => {
+      records.forEach((r) => {
         const sign = r.type === 'income' ? '+' : '-';
         const color = r.type === 'income' ? 'income' : 'expense';
         balance += r.type === 'income' ? r.amount : -r.amount;
@@ -137,6 +145,39 @@
 
       document.getElementById('history').innerHTML = html || '<p style="color:#777">Поки немає записів</p>';
       document.getElementById('summary').innerHTML = `Баланс: <b>${balance.toFixed(0)} грн</b>`;
+    }
+
+    function sendReport() {
+      if (records.length === 0) {
+        alert("Немає даних для відправки");
+        return;
+      }
+
+      let balance = 0;
+      records.forEach(r => {
+        balance += r.type === 'income' ? r.amount : -r.amount;
+      });
+
+      // Формуємо текст звіту
+      let text = `📊 *Фінансовий звіт*\n\n`;
+      text += `💰 Баланс: *${balance.toFixed(0)} грн*\n`;
+      text += `📅 Записів: ${records.length}\n\n`;
+      text += `Останні операції:\n`;
+
+      // останні 5 записів
+      const last = records.slice(-5).reverse();
+      last.forEach(r => {
+        const sign = r.type === 'income' ? '✅ +' : '❌ -';
+        text += `${r.date} ${sign}${r.amount} — ${r.category}\n`;
+      });
+
+      // Відправляємо дані в бот
+      tg.sendData(text);
+      
+      tg.showPopup({
+        title: "✅ Відправлено",
+        message: "Звіт надіслано в чат"
+      });
     }
 
     function clearAll() {
