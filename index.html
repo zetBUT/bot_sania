@@ -1,10 +1,227 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Finance App</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+
+body{
+    background:#0f0f0f;
+    color:white;
+    font-family:Arial;
+    padding:15px;
+}
+
+.container{
+    max-width:500px;
+    margin:auto;
+}
+
+.card{
+    background:#1d1d1d;
+    padding:15px;
+    border-radius:15px;
+    margin-top:10px;
+}
+
+input,
+select,
+button{
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+}
+
+input,
+select{
+    background:#2a2a2a;
+    color:white;
+}
+
+button{
+    background:#0088cc;
+    color:white;
+    font-weight:bold;
+}
+
+.green{
+    color:#00e676;
+}
+
+.red{
+    color:#ff5252;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<h1>💰 Finance App</h1>
+
+<div class="card">
+    <h3>💰 Доходи</h3>
+    <h2 id="income">0 грн</h2>
+</div>
+
+<div class="card">
+    <h3>💸 Витрати</h3>
+    <h2 id="expense">0 грн</h2>
+</div>
+
+<div class="card">
+    <h3>🟢 Баланс</h3>
+    <h2 id="balance">0 грн</h2>
+</div>
+
+<select id="type">
+
+<option value="income">
+Доходи
+</option>
+
+<option value="expense">
+Витрати
+</option>
+
+</select>
+
+<input
+type="text"
+id="category"
+placeholder="Категорія">
+
+<input
+type="number"
+id="amount"
+placeholder="Сума">
+
+<button onclick="addTransaction()">
+➕ Додати
+</button>
+
+<button onclick="sendReport()">
+📤 Відправити звіт
+</button>
+
+<div id="history"></div>
+
+</div>
+
 <script>
 
 Telegram.WebApp.ready()
 
 let transactions = JSON.parse(
-    localStorage.getItem("transactions")
+localStorage.getItem("transactions")
 ) || []
+
+updateUI()
+
+function addTransaction(){
+
+    let type =
+    document.getElementById("type").value
+
+    let category =
+    document.getElementById("category").value
+
+    let amount =
+    document.getElementById("amount").value
+
+    if(category==="" || amount===""){
+        alert("Заповни поля")
+        return
+    }
+
+    transactions.push({
+
+        type:type,
+        category:category,
+        amount:Number(amount)
+
+    })
+
+    localStorage.setItem(
+        "transactions",
+        JSON.stringify(transactions)
+    )
+
+    updateUI()
+
+    document.getElementById("category").value=""
+    document.getElementById("amount").value=""
+}
+
+function updateUI(){
+
+    let income = 0
+    let expense = 0
+
+    let html = ""
+
+    transactions
+    .slice()
+    .reverse()
+    .forEach(item=>{
+
+        if(item.type==="income"){
+            income += item.amount
+        }else{
+            expense += item.amount
+        }
+
+        html += `
+
+        <div class="card">
+
+        <h3>
+        ${item.category}
+        </h3>
+
+        <p class="${
+        item.type==="income"
+        ? "green"
+        : "red"
+        }">
+
+        ${
+        item.type==="income"
+        ? "+"
+        : "-"
+        }
+
+        ${item.amount} грн
+
+        </p>
+
+        </div>
+        `
+    })
+
+    document.getElementById("income")
+    .innerText = income + " грн"
+
+    document.getElementById("expense")
+    .innerText = expense + " грн"
+
+    document.getElementById("balance")
+    .innerText = income - expense + " грн"
+
+    document.getElementById("history")
+    .innerHTML = html
+}
 
 function sendReport(){
 
@@ -15,22 +232,26 @@ function sendReport(){
 
         if(item.type==="income"){
             income += item.amount
-        }
-        else{
+        }else{
             expense += item.amount
         }
 
     })
 
-    let balance = income - expense
-
     let report =
 
-`💰 Доходи: ${income} грн
+`📊 Місячний звіт
+
+💰 Доходи: ${income} грн
 💸 Витрати: ${expense} грн
-🟢 Баланс: ${balance} грн`
+🟢 Баланс: ${income-expense} грн`
 
     Telegram.WebApp.sendData(report)
+
+    Telegram.WebApp.close()
 }
 
 </script>
+
+</body>
+</html>
